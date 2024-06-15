@@ -1,0 +1,6 @@
+export const COUNTRY_SUCEES="COUNTRY_SUCEES";
+export const COUNTRY_FAIL="COUNTRY_FAIL";
+export const STATE_SUCEES="STATE_SUCEES";
+export const STATE_FAIL="STATE_FAIL";
+export const CITY_SUCEES="CITY_SUCEES";
+export const CITY_FAIL="CITY_FAIL";
