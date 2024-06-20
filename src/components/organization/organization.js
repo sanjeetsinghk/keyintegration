@@ -18,10 +18,15 @@ import { cilLockLocked, cilUser } from '@coreui/icons'
 import OrgRegistration from './OrgRegistraion'
 
 const Organization = () => {
-    const [activeKey, setActiveKey] = useState(1)
+    const [activeKey, setActiveKey] = useState(1);
+    
+    const setFormula=(formula)=>{
+        console.log(formula)
+    }
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row">
-         <CContainer>
+        <OrgRegistration></OrgRegistration>
+         {/* <CContainer>
             <CRow className="justify-content-center">
                 <CCol md={12}>
                 <CNav variant="tabs">
@@ -32,24 +37,34 @@ const Organization = () => {
                             onClick={() => setActiveKey(1)}
                         >
                             Kpis
-                        </CNavLink>
+                        </CNavLink>                       
                     </CNavItem>
-                   
-            </CNav>
+                   <CNavItem>
+                        <CNavLink
+                            href="#"
+                            active={activeKey === 2}
+                            onClick={() => setActiveKey(2)}
+                        >
+                            Existing Formula
+                        </CNavLink>
+                   </CNavItem>
+                </CNav>
                 </CCol>
             </CRow>
             <CRow className="justify-content-center">
                 <CCol md={12} >
                 <CTabContent>
                     <CTabPane visible={activeKey === 1}>
-                        <OrgRegistration></OrgRegistration>
+                        <OrgRegistration onFormula={setFormula}></OrgRegistration>
                     </CTabPane>
-                 
+                    <CTabPane visible={activeKey===2}>
+                        <label>formula</label>
+                    </CTabPane>
                    
                 </CTabContent>
             </CCol>
             </CRow>
-        </CContainer>
+        </CContainer> */}
     </div>
   )
 }
