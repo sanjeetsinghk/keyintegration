@@ -107,6 +107,16 @@ const OrgRegistration = () => {
       }
     })
   },[])
+  const getFilteredKeysForSelect=(keys,isLastItem)=>{
+    let _keys=keys;
+    if(keys.filter((x)=>x.value=='ownerID').length>0){
+      if(isLastItem)
+        _keys=keys.filter((x)=>x.value=='netValues');
+      else
+      _keys=keys.filter((x)=>x.value=='type');
+      return _keys;
+    }
+  }
   const setInitialData=(initialData)=>{
     let keys =Object.keys(initialData).map((x)=>{
       return { value: x, label: x }
@@ -322,7 +332,7 @@ const OrgRegistration = () => {
         console.log(actionItem);
         data.push({
           jsonData:isLastItem ?filtered:selectedOperator=='all'?filtered:filtered[0].details ,
-          keys:actionItem,
+          keys:getFilteredKeysForSelect(actionItem,isLastItem),
           selectedKey:null,
           selectedValue:null,
           selectedValueType:null,
@@ -401,6 +411,7 @@ const OrgRegistration = () => {
   }
   const onShowCondition=()=>{
     setShowCondition(true);
+    setFormulationStep(false);
   }
   const inputUpdate=(e,pIndex,type)=>{
     let _conditionalStep=conditionStep;
@@ -991,8 +1002,8 @@ const OrgRegistration = () => {
                                       
                                         <CCol xl={12}>
                                           <CRow className='m-2'>
-                                            <CCol xl={6}> <strong>If</strong> <label className='btn btn-link'>CaseType equals <u><strong>{x.selectedTypeValue}</strong></u></label></CCol>
-                                            <CCol xl={1}><strong>Then</strong></CCol>
+                                            <CCol xl={5}> <strong>If</strong> <label className='btn btn-link'>CaseType equals <u><strong>{x.selectedTypeValue}</strong></u></label></CCol>
+                                            <CCol xl={2} className=' text-end mt-2'><strong>Then</strong></CCol>
                                               <CCol xl={3}>
                                                 <ReactSelect value={{label:x.selectedTypeAction,value:x.selectedTypeAction}} className='operator'  options={actionOperator} onChange={(e) => onPreFormulaSelectedOperator(e,x)}></ReactSelect>
                                               </CCol> 
