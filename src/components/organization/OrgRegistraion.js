@@ -16,7 +16,9 @@ import {
   CToastBody,
   CToastHeader,
   CToaster,CNav,
-  CNavItem,CNavLink,CTabContent,CTabPane
+  CNavItem,CNavLink,CTabContent,CTabPane,
+  CListGroup,
+  CListGroupItem
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { Form} from 'react-final-form'
@@ -93,20 +95,32 @@ const OrgRegistration = () => {
   const typeRef=useRef(null);
   const nameRef=useRef(null);
   const descriptionRef=useRef(null);
+  const inputDynamicRef=useRef(null);
   const [errorMessage,setErrorMessage]=useState(initialMessage);
   const [isOutputSavedSuccessFullt,setIsOutputSaved]=useState(false);
+  const [showDisplayMatches,setShowDisplayMatches]=useState(false)
   useEffect(()=>{
+    getUserDeta();
+  },[]);
+  //service call
+  const getUserDeta=()=>{
     userService.GetJSonData().then((res)=>{
       console.log(res.data);
       if(res && res.data){
         if(res.data.formula!=null){
-          setPredefinedFormula(JSON.parse(res.data.formula));         
+          setPredefinedFormula(JSON.parse(res.data.formula));   
+          let kpiList=[];
+          JSON.parse(res.data.formula).forEach((x)=>{
+            kpiList.push({value:0,label:x.KPIName+' '+x.Description,case:'001',id:x.KPIName})
+          });
+          setKpisList([...kpiList]);  
+          setSavedKpis([...JSON.parse(res.data.formula)])    
         }
         setIntegratedData(res.data.model);
         setInitialData(res.data.model)
       }
     })
-  },[])
+  }
   const getFilteredKeysForSelect=(keys,isLastItem)=>{
     let _keys=keys;
     if(keys.filter((x)=>x.value=='ownerID').length>0){
@@ -144,6 +158,27 @@ const OrgRegistration = () => {
       actionItem:null
   }]
     setConditionStep(data);
+  }
+  const clearFormula=()=>{
+    userService.ClearFormula().then((res)=>{
+      if(res){
+        resetData();
+        getUserDeta();
+      }
+    });    
+  }
+  const resetData=()=>{
+    setPredefinedFormula(null);
+    setKpisList([]);
+    setSavedKpis([]);
+    setConditionStep([]);
+    setSearchText(null);    
+    setShowCondition(false);
+    setFormulationStep(false);
+    typeRef.current.value=null;
+    descriptionRef.current.value=null;
+    nameRef.current.value=null;
+    //inputDynamicRef.current.value=null;
   }
   const getKeys=(arrayValue)=>{
       return Object.keys(arrayValue).map((item)=>{
@@ -224,9 +259,9 @@ const OrgRegistration = () => {
             :selectedKeyValues,
           keys:(keys.filter((_itemx)=>_itemx.value=='caseID').length>0) ?keys.filter((_itemx)=>_itemx.value=='caseID'):keys,
           selectedKey:(arrayValues && !isArrayValueOfTypeObj)?data[index].selectedKey:null,
-          selectedValue:null,
+          selectedValue:index==1 ?{label:arrayValues[0],value:arrayValues[0]}:null,
           selectedValueType:null,
-          selectedOperator:null,
+          selectedOperator:index==1? {value:'==',label:'equals'}:null,
           isObjectLevel:(!arrayValues || isArrayValueOfTypeObj)?true:false,
           isValueLevel:(arrayValues && !isArrayValueOfTypeObj)?true:false,
           operator:null,
@@ -370,6 +405,10 @@ const OrgRegistration = () => {
     switch(key){
       case "key":         
         let filteredObject=getJsonSelectedKeys(data,index,event)
+        if(index==1){
+          let __filteredData=getOnSelectedValue(filteredObject,index+1,filteredObject[index+1].selectedValue); 
+          console.log(__filteredData)
+        }
         originalCondition[pIndex].conditionalSteps=filteredObject;
         setConditionStep([...originalCondition]);           
       break;
@@ -442,9 +481,23 @@ const OrgRegistration = () => {
           addToast(exampleToast);
         }
         else{
-          let _conditionalSteps=conditionStep;
+          let data=conditionStep[0];
+          let index=data.conditionalSteps.length;
+          let _conditionalSteps ={
+            selectedId: data.kpiName,
+            selectedType: "type",
+            selectedOperator: "==",
+            selectedTypeValue: data.conditionalSteps[index-2].selectedValue.value,
+            selectedResult: null,
+            selectedTypeAction: data.conditionalSteps[index-1].selectedOperator.value,
+            Type: data.type,
+            KPIName: data.kpiName,
+            Description: data.description,
+            operationBetweenItems: null,
+            computedText:null
+          }
           let _savedKpis=savedKpis;
-          _savedKpis.push(..._conditionalSteps);
+          _savedKpis.push(_conditionalSteps);
           setSavedKpis([..._savedKpis]);
           setInitialData(integratedData);
           setFormulationStep(false);
@@ -461,20 +514,31 @@ const OrgRegistration = () => {
       let _savedKpis=savedKpis;
       let kpiList=[];
       _savedKpis.forEach((x)=>{
-        let lastItem=x.conditionalSteps.length-1;
-        let kpiName=x.kpiName
-        let result=x.conditionalSteps[lastItem].result;
-        kpiList.push({value:result,label:kpiName+' ('+result+')',case:x.caseValue,id:x.kpiName})
+        kpiList.push({value:0,label:x.KPIName+' '+x.Description,case:'',id:x.KPIName})
       });
       setKpisList([...kpiList]);
     }
 
   }
+  const onDeleteKpis=(kpis)=>{
+    console.log(kpis)
+    let _kpisList=kpisList;
+    let _kpis=savedKpis;
+    let index=savedKpis.findIndex((x)=>x.selectedId==kpis.selectedId);
+    let _kpisListIndex=kpisList.findIndex((x)=>x.id==kpis.selectedId);
+    _kpis.splice(index);
+    _kpisList.splice(_kpisListIndex);
+    setSavedKpis([..._kpis]);
+    setKpisList([..._kpisList]);
+  }
   const bindSavedKpisData=(kpis,index)=>{
-    let lastItem=kpis.conditionalSteps.length-1;
+   
     return(
-      <CRow>        
-        <CCol className='text-end'>{index+1} / {kpis.type} / {kpis.kpiName} / {kpis.description} <strong>Result: {kpis.conditionalSteps[lastItem].result}</strong></CCol>       
+      <CRow>   
+         <CCol className='text-end mt-2' xl={10}>{kpis.Type} {kpis.KPIName} {kpis.Description}</CCol> 
+         <CCol xl={2}>
+            <CButton color="link" onClick={()=>onDeleteKpis(kpis)}>Delete KPI</CButton>
+         </CCol>      
       </CRow>
     )
   }
@@ -552,28 +616,20 @@ const OrgRegistration = () => {
             addToast(exampleToast);
           }
           else{
-            let data={
-              type:typeRef.current.value,
-              kpiName:nameRef.current.value,
-              description:descriptionRef.current.value,
-              caseValue:kpisFormula.operand1.case,
-              conditionalSteps:[{          
-                keys:null,
-                jsonData:{case:kpisFormula.case,operand1:kpisFormula.operand1.id,operator:kpisFormula.operator,operand2:kpisFormula.operand2.id},
-                operator:null,
-                selectedOperator:null,
-                selectedKey:null,
-                selectedValue:null,
-                selectedValueType:null,
-                isObjectLevel:true,
-                isValueLevel:false,
-                valueType:null,
-                filteredValue:null,
-                isLastItem:false,
-                result:getFormulatedResult()
-              }],
-              actionItem:null
-            } 
+            let data ={
+              selectedId: nameRef.current.value,
+              selectedType:null,
+              selectedOperator:null,
+              selectedTypeValue: null,
+              selectedResult: null,
+              selectedTypeAction: null,
+              Type: typeRef.current.value,
+              KPIName: nameRef.current.value,
+              Description: descriptionRef.current.value,
+              operationBetweenItems: null,
+              computedText:searchText
+            }
+            
             let _savedKpis=savedKpis;
             _savedKpis.push(data);
             setSavedKpis([..._savedKpis]);
@@ -582,41 +638,49 @@ const OrgRegistration = () => {
             nameRef.current.value=null;
             descriptionRef.current.value=null;  
             setFormulationStep(false);
+            setSearchText(null)
             onShowFormulaCondition();
+            inputDynamicRef.current.value=null;
+            console.log(_savedKpis)
           }
       }
   }
   //calculate the result between 2 kpis
   const getFormulatedResult=()=>{
     let result=0;
-    let operand1=parseFloat(kpisFormula.operand1.value);
-    let operand2=parseFloat(kpisFormula.operand2.value);
-    switch(kpisFormula.operator.value){
-      case'sum':
-          result=operand1+operand2;
-        break;
-      case 'subtract':
-        result=operand1-operand2;
-        break;
-      case'avg':
-          result=(operand1+operand2)/2;
-        break;
-      case'count':
-          result=2;
-        break;
-      case'max':
-          result=Math.max(operand1,operand2);
-        break;
-      case'min':
-          result=Math.min(operand1,operand2);
-        break;
-      case'divide':
-          result=(operand1/operand2);
-        break;
-      case'multiply':
-          result=(operand1*operand2);
-        break;
-    }
+    // let operand1=parseFloat(kpisFormula.operand1.value);
+    // let operand2=parseFloat(kpisFormula.operand2.value);
+    // switch(kpisFormula.operator.value){
+    //   case'sum':
+    //       result=operand1+operand2;
+    //     break;
+    //   case 'subtract':
+    //     result=operand1-operand2;
+    //     break;
+    //   case'avg':
+    //       result=(operand1+operand2)/2;
+    //     break;
+    //   case'count':
+    //       result=2;
+    //     break;
+    //   case'max':
+    //       result=Math.max(operand1,operand2);
+    //     break;
+    //   case'min':
+    //       result=Math.min(operand1,operand2);
+    //     break;
+    //   case'divide':
+    //       result=(operand1/operand2);
+    //     break;
+    //   case'multiply':
+    //       result=(operand1*operand2);
+    //     break;
+    // }
+    let _computedText=searchText;
+    kpisList.forEach((x)=>{
+      _computedText=_computedText.replaceAll(x.id,x.value);
+    })
+    result=eval(_computedText);
     return result;
   }
 
@@ -631,37 +695,33 @@ const OrgRegistration = () => {
           let _formula={...formula};
           let _case=x.caseValue;
           //to get the case type value and operator
-          let selectedType= x.conditionalSteps.filter((x)=>x.selectedKey?.value=='type' 
-            && x.selectedOperator?.value=='==' 
-            && x.selectedValue?.value);
-          //to get the  applied Actions
-          let appliedAction= x.conditionalSteps.filter((x)=>x.selectedKey==null 
-          && actionOperators.includes(x.selectedOperator?.value)
-          && x.selectedValue?.value);
+         
           let caseActionFilters=[];         
 
-          if(selectedType && selectedType.length && appliedAction && appliedAction.length){
+          if(!x?.computedText){
             
-            _formula.selectedId=x.kpiName;
-            _formula.Type=x.type,
-            _formula.KPIName=x.kpiName,
-            _formula.Description=x.description,
-            _formula.selectedType=selectedType[0].selectedKey.value;
-            _formula.selectedOperator=selectedType[0].selectedOperator.value;
-            _formula.selectedTypeValue=selectedType[0].selectedValue.value;
-            _formula.selectedTypeAction=appliedAction[0].selectedOperator.value;  
-            _formula.operationBetweenItems=null;          
+            _formula.selectedId=x.KPIName;
+            _formula.Type=x.Type,
+            _formula.KPIName=x.KPIName,
+            _formula.Description=x.Description,
+            _formula.selectedType=x.selectedType;
+            _formula.selectedOperator=x.selectedOperator;
+            _formula.selectedTypeValue=x.selectedTypeValue;
+            _formula.selectedTypeAction=x.selectedTypeAction;  
+            _formula.operationBetweenItems=null;  
+            _formula.computedText=null;        
             _formulaList.push(_formula);           
           }
-          if(x.conditionalSteps.length==1 && x.conditionalSteps[0].jsonData && x.conditionalSteps[0].jsonData?.operand1  && x.conditionalSteps[0].jsonData?.operand2)
+          if( x?.computedText)
           {
-            _formula.selectedId=x.kpiName;
-            _formula.Type=x.type,
-            _formula.KPIName=x.kpiName,
-            _formula.Description=x.description,
-            _formula.operationBetweenItems.item1= x.conditionalSteps[0].jsonData?.operand1;
-            _formula.operationBetweenItems.item2= x.conditionalSteps[0].jsonData?.operand2;
-            _formula.operationBetweenItems.operator= x.conditionalSteps[0].jsonData?.operator;
+            _formula.selectedId=x.KPIName;
+            _formula.Type=x.Type,
+            _formula.KPIName=x.KPIName,
+            _formula.Description=x.Description,
+            _formula.computedText=x?.computedText
+            _formula.operationBetweenItems.item1= null;
+            _formula.operationBetweenItems.item2= null;
+            _formula.operationBetweenItems.operator= null;
             _formulaList.push(_formula);
           }
         }
@@ -679,103 +739,12 @@ const OrgRegistration = () => {
     let formulaExp=isformulaModied?predefinedFormula:genrateFormulaCases();
     let responseData=integratedData;
     if(formulaExp && formulaExp.length>0){
-     
-      responseData.cases.forEach((item)=>{
-        //delete x.item;
-        let list=[];
-        formulaExp.forEach((x,index)=>{
-          let filterResult=[];
-          let calculatedResult=0;
-          if(x.selectedType && x.selectedOperator && x.selectedTypeValue && x.selectedTypeAction){
-            switch(x.selectedOperator){
-              case "==":
-                filterResult= item.details.filter((obj)=>obj[x.selectedType]==x.selectedTypeValue)
-                break;
-            }
-            switch(x.selectedTypeAction){
-              case "sum":            
-                filterResult.forEach((sum)=>{
-                  calculatedResult+=sum['netValues'];
-                })                  
-                break;
-              case "count":
-                calculatedResult=filterResult.length;
-              break;
-              case "max":
-                calculatedResult=Math.max(...filterResult.map((x)=>x['netValues']));
-              break;
-              case "min":
-                calculatedResult=Math.min(...filterResult.map((x)=>x['netValues']))
-              break;
-              case "avg":
-              
-              filterResult.forEach((avg)=>{
-                  calculatedResult+=avg['netValues'];
-                });
-                calculatedResult=(calculatedResult/filterResult.length);
-              break;
-            }
-            list.push({
-              KPIID:'KPI00'+(index+1),
-              Type:x.Type,
-              KPIName:x.KPIName,
-              Description:x.Description,
-              Value:calculatedResult
-            })
-            console.log("case ID "+x.caseID+" with Result "+calculatedResult);
-          }
-          
-          if(x.operationBetweenItems?.item1 && x.operationBetweenItems?.item2 && x.operationBetweenItems?.operator){
-            let item1Value=list.filter((inner)=>inner.KPIName==x.operationBetweenItems.item1)[0]?.Value;
-            let item2Value=list.filter((inner)=>inner.KPIName==x.operationBetweenItems.item2)[0]?.Value;
-            switch(x.operationBetweenItems.operator.value){
-              case "sum":            
-                calculatedResult=item1Value+item2Value;                 
-                break;
-              case "subtract":
-                calculatedResult=item1Value-item2Value;
-              break;
-              case "count":
-                calculatedResult=2;
-              break;
-              case "max":
-                calculatedResult=Math.max(item1Value,item2Value);
-              break;
-              case "min":
-                calculatedResult=Math.min(item1Value,item2Value)
-              break;
-              case'divide':
-                calculatedResult=(item1Value/item2Value);
-                break;
-              case'multiply':
-                calculatedResult=(item1Value*item2Value);
-              break;
-              case "avg":              
-                calculatedResult=item1Value+item2Value;
-                calculatedResult=(calculatedResult/2);
-              break;
-            }
-            list.push({
-              KPIID:'KPI00'+(index+1),
-              Type:x.Type,
-              KPIName:x.KPIName,
-              Description:x.Description,
-              Value:calculatedResult
-            })
-          }
-
-        })
-        delete item.details;
-        item.KPIs=list
-        console.log(list)
-      })
        userService.SaveJsonResponse({formula:formulaExp,JsonData:responseData}).then((res)=>{     
-        if(res && res.data){
-          setErrorMessage("Formula and Generated JSON is saved successfully");
-         
+        if(res && res.statusText =="OK"){
+          setErrorMessage("Formula and Generated JSON is saved successfully");         
           addToast(exampleToastSuccess);
-         
-
+          resetData();
+          getUserDeta();
         }
       })
     }
@@ -797,6 +766,49 @@ const OrgRegistration = () => {
   }
   const onModiedNSaveFormula=()=>{
     genrateFormulanSaveCases(true);
+  }
+  const onSelectedGroup=(e)=>{
+    if(showFormulationStep){
+      console.log(e)
+      let _text=searchText ==null ?'':searchText;
+      _text+=e.id;
+      setSearchText(_text);
+      console.log(_text);
+    }
+  }
+  const displayMatches=()=>{
+    
+    return(  <CListGroup className='p-0'>{
+        kpisList.map((x)=>{
+          return(
+            <CListGroupItem onClick={() => onSelectedGroup(x)}><strong>{x.id} </strong>{x.label}</CListGroupItem>
+          )
+        })
+     
+      }
+      </CListGroup>
+    )
+  }
+  const [searchText,setSearchText]=useState(null)
+  
+  const inputDynamicUpdate=(e)=>{
+    setSearchText(e.target.value);
+    console.log(e.target.value)
+  }
+  const inputDynamicEdit=(type,e)=>{
+    let _preFormula=predefinedFormula;
+    if(_preFormula){
+      let index=_preFormula.findIndex((x)=>x.selectedId==type.selectedId);
+      if(_preFormula[index]?.computedText){
+        _preFormula[index].computedText=e.target.value
+      }
+      else
+      {
+        _preFormula[index].selectedTypeAction=e.value;
+      }
+      setPredefinedFormula([..._preFormula]);
+      setIsFormulaModified(true);
+    }
   }
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row mt-1 ml-0">
@@ -851,6 +863,11 @@ const OrgRegistration = () => {
                                   <CButton color="link" onClick={onShowFormulaCondition}>Apply Formula on Existing Kpis</CButton>
                                 }                      
                               </CCol>
+                              <CCol xl={3}>
+                                {predefinedFormula &&
+                                 <CButton color="link" onClick={clearFormula}>Clear Formula and Add New</CButton>
+                                }
+                              </CCol>
                             </CRow>
                             <CRow >
                               <CCol xl={6}>
@@ -859,7 +876,7 @@ const OrgRegistration = () => {
                                     <CIcon icon={cilViewColumn}/>  
                                   </CInputGroupText>        
                                   <CFormInput 
-                                    ref={typeRef}
+                                    ref={typeRef}                                   
                                     type='text'
                                     placeholder='Enter Type'
                                     onChange={(e)=>inputUpdate(e,0,'type')} /> 
@@ -892,14 +909,19 @@ const OrgRegistration = () => {
                             {
                               showFormulationStep && kpisList && kpisList.length>0 &&
                               <CRow>
-                                <CCol xl={3}>
-                                  <ReactSelect value={kpisFormula.operand1} className='operand'  options={kpisList} onChange={(e) => onSelectedOperand(e,'operand1')}></ReactSelect>
-                                </CCol>
-                                <CCol xl={3}>
-                                  <ReactSelect value={kpisFormula.operator} className='operator'  options={formulaOperator} onChange={(e) => onSelectedOperand(e,'operator')}></ReactSelect>
-                                </CCol>
-                                <CCol xl={3}>
-                                  <ReactSelect value={kpisFormula.operand2} className='operand'  options={kpisList} onChange={(e) => onSelectedOperand(e,'operand2')}></ReactSelect>
+                                <CCol xl={12}><label><strong>Actions</strong></label></CCol>
+                                <CCol xl={12}>
+                                  <CInputGroup   className='mb-3'>
+                                    <CInputGroupText>
+                                    =
+                                    </CInputGroupText>        
+                                    <CFormInput 
+                                     ref={inputDynamicRef} 
+                                      value={searchText}
+                                      type='text'
+                                      placeholder='Enter Type'
+                                      onChange={(e)=>inputDynamicUpdate(e)} /> 
+                                  </CInputGroup>
                                 </CCol>
                               </CRow>
                             }
@@ -961,7 +983,14 @@ const OrgRegistration = () => {
                                   </>)
                                 })
                               }
-                              
+                            <CRow className='mt-3'>
+                              <CCol xl={12}>
+                                  <strong>List of Existing KPIS</strong>
+                                <ul className="search-results p-0 mt-4 mh-200">
+                                  {displayMatches()}
+                                </ul>
+                              </CCol>
+                            </CRow>
                             <CRow className='float-end mt-3'>
                               <CCol xl={12} >
                                 {showCondition&&
@@ -1013,21 +1042,25 @@ const OrgRegistration = () => {
                                         </CCol>
                                       
                                       }
-                                       {x.operationBetweenItems!=null &&
+                                       {x?.computedText!=null &&
                                       
                                       <CCol xl={12}>
                                         <CRow className='m-2'>
-                                         
-                                         
-                                          <CCol xl={2} className='m-1'>
-                                            <u><strong>{x.operationBetweenItems.item1} </strong></u>
+                                          <CCol xl={12} className='m-1'>
+                                          <CInputGroup   className='mb-3'>
+                                            <CInputGroupText>
+                                            =
+                                            </CInputGroupText>        
+                                            <CFormInput                                              
+                                              value={x?.computedText}
+                                              type='text'
+                                              placeholder='Enter Type'
+                                              onChange={(e)=>inputDynamicEdit(x,e)}
+                                              /> 
+                                          </CInputGroup>
+                                            
                                           </CCol>
-                                          <CCol xl={4}> 
-                                            <ReactSelect value={x.operationBetweenItems.operator} className='operator'  options={formulaOperator} onChange={(e) => onPreFormulaSelectedOperator(e,x)}></ReactSelect> 
-                                          </CCol>
-                                          <CCol xl={2} className='m-1 text-end'>
-                                            <u><strong>{x.operationBetweenItems.item2}</strong></u>
-                                          </CCol>
+                                          
                                         </CRow>
                                        
                                       </CCol>

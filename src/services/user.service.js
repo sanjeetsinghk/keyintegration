@@ -8,6 +8,9 @@ const API_URL = process.env.REACT_APP_BASE_API_URL;
 const GetJSonData = () => {
   return axios.get(API_URL + "JsonConverter/GetJSonData", { headers: authHeader() });
 };
+const ClearFormula = () => {
+  return axios.get(API_URL + "JsonConverter/ClearFormula", { headers: authHeader() });
+};
 const SaveJsonResponse = (data) => {
  // data=JSON.stringify(data);
   console.log(data)
@@ -22,5 +25,6 @@ const SaveJsonResponse = (data) => {
 };
 export default { 
   GetJSonData,
-  SaveJsonResponse
+  SaveJsonResponse,
+  ClearFormula
 };

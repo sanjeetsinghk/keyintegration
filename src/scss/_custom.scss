@@ -18,3 +18,8 @@
     border: 1px solid #6a3228;
     border-radius: 5px;
   }
+  .mh-200{
+    //height: 200px;
+    max-height: 200px;
+    overflow-y: auto;
+  }

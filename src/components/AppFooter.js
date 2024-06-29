@@ -8,7 +8,7 @@ const AppFooter = () => {
         <a target="_blank" rel="noopener noreferrer">
           Key Integration
         </a>
-        <span className="ms-1">&copy; 2024 creativeLabs.</span>
+        <span className="ms-1"></span>
       </div>
       <div className="ms-auto">
         <span className="me-1">Powered by</span>
