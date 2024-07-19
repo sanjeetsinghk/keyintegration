@@ -34,7 +34,7 @@ const formula={
   selectedResult:null,
   selectedTypeAction:null,
   Type:null,
-  KPIName:null,
+  KpiName:null,
   Description:null,
   operationBetweenItems:{
     item1:null,
@@ -111,7 +111,7 @@ const OrgRegistration = () => {
           setPredefinedFormula(JSON.parse(res.data.formula));   
           let kpiList=[];
           JSON.parse(res.data.formula).forEach((x)=>{
-            kpiList.push({value:0,label:x.KPIName+' '+x.Description,case:'001',id:x.KPIName})
+            kpiList.push({value:0,label:x.KpiName+' '+x.Description,case:'001',id:x.KpiName})
           });
           setKpisList([...kpiList]);  
           setSavedKpis([...JSON.parse(res.data.formula)])    
@@ -137,7 +137,7 @@ const OrgRegistration = () => {
     }).filter((x)=>x.value=='cases');
     let data=[{
       type:'',
-      kpiName:'',
+      KpiName:'',
       description:'',
       caseValue:null,
       conditionalSteps:[{          
@@ -459,7 +459,7 @@ const OrgRegistration = () => {
         _conditionalStep[pIndex].type=e.target.value;
         break;
       case "name":
-        _conditionalStep[pIndex].kpiName=e.target.value;
+        _conditionalStep[pIndex].KpiName=e.target.value;
         break;
       case "description":
         _conditionalStep[pIndex].description=e.target.value;
@@ -475,7 +475,7 @@ const OrgRegistration = () => {
       }
       else
       {
-        if(savedKpis.filter((x)=>x.kpiName==nameRef.current.value).length>0)
+        if(savedKpis.filter((x)=>x.KpiName==nameRef.current.value).length>0)
         {
           setErrorMessage("KPI Name "+nameRef.current.value+" already existed, Please choose another name");
           addToast(exampleToast);
@@ -484,14 +484,14 @@ const OrgRegistration = () => {
           let data=conditionStep[0];
           let index=data.conditionalSteps.length;
           let _conditionalSteps ={
-            selectedId: data.kpiName,
+            selectedId: data.KpiName,
             selectedType: "type",
             selectedOperator: "==",
             selectedTypeValue: data.conditionalSteps[index-2].selectedValue.value,
             selectedResult: null,
             selectedTypeAction: data.conditionalSteps[index-1].selectedOperator.value,
             Type: data.type,
-            KPIName: data.kpiName,
+            KpiName: data.KpiName,
             Description: data.description,
             operationBetweenItems: null,
             computedText:null
@@ -514,7 +514,7 @@ const OrgRegistration = () => {
       let _savedKpis=savedKpis;
       let kpiList=[];
       _savedKpis.forEach((x)=>{
-        kpiList.push({value:0,label:x.KPIName+' '+x.Description,case:'',id:x.KPIName})
+        kpiList.push({value:0,label:x.KpiName+' '+x.Description,case:'',id:x.KpiName})
       });
       setKpisList([...kpiList]);
     }
@@ -535,7 +535,7 @@ const OrgRegistration = () => {
    
     return(
       <CRow>   
-         <CCol className='text-end mt-2' xl={10}>{kpis.Type} {kpis.KPIName} {kpis.Description}</CCol> 
+         <CCol className='text-end mt-2' xl={10}>{kpis.Type} {kpis.KpiName} {kpis.Description}</CCol> 
          <CCol xl={2}>
             <CButton color="link" onClick={()=>onDeleteKpis(kpis)}>Delete KPI</CButton>
          </CCol>      
@@ -610,7 +610,7 @@ const OrgRegistration = () => {
       }
       else
       {
-        if(savedKpis.filter((x)=>x.kpiName==nameRef.current.value).length>0)
+        if(savedKpis.filter((x)=>x.KpiName==nameRef.current.value).length>0)
           {
             setErrorMessage("KPI Name "+nameRef.current.value+" already existed, Please choose another name");
             addToast(exampleToast);
@@ -624,7 +624,7 @@ const OrgRegistration = () => {
               selectedResult: null,
               selectedTypeAction: null,
               Type: typeRef.current.value,
-              KPIName: nameRef.current.value,
+              KpiName: nameRef.current.value,
               Description: descriptionRef.current.value,
               operationBetweenItems: null,
               computedText:searchText
@@ -700,9 +700,9 @@ const OrgRegistration = () => {
 
           if(!x?.computedText){
             
-            _formula.selectedId=x.KPIName;
+            _formula.selectedId=x.KpiName;
             _formula.Type=x.Type,
-            _formula.KPIName=x.KPIName,
+            _formula.KpiName=x.KpiName,
             _formula.Description=x.Description,
             _formula.selectedType=x.selectedType;
             _formula.selectedOperator=x.selectedOperator;
@@ -714,9 +714,9 @@ const OrgRegistration = () => {
           }
           if( x?.computedText)
           {
-            _formula.selectedId=x.KPIName;
+            _formula.selectedId=x.KpiName;
             _formula.Type=x.Type,
-            _formula.KPIName=x.KPIName,
+            _formula.KpiName=x.KpiName,
             _formula.Description=x.Description,
             _formula.computedText=x?.computedText
             _formula.operationBetweenItems.item1= null;
@@ -1026,7 +1026,7 @@ const OrgRegistration = () => {
                                   <>
 
                                     <CRow>
-                                      <CCol xl={3}>{x.Type}</CCol><CCol xl={3}>{x.KPIName}</CCol><CCol xl={6}>{x.Description}</CCol>
+                                      <CCol xl={3}>{x.Type}</CCol><CCol xl={3}>{x.KpiName}</CCol><CCol xl={6}>{x.Description}</CCol>
                                       {x.operationBetweenItems==null &&
                                       
                                         <CCol xl={12}>
